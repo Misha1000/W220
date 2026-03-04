@@ -42,21 +42,33 @@ function initMap() {
   loadMarkers();
 }
 
-function loadMarkers() {
+function parseCSV(text) {
+  const rows = [];
+  const regex = /(".*?"|[^",\s]+)(?=\s*,|\s*$)/g;
 
+  text.split("\n").forEach(line => {
+    const row = [];
+    let match;
+    while (match = regex.exec(line)) {
+      row.push(match[0].replace(/"/g, ""));
+    }
+    if (row.length) rows.push(row);
+  });
+
+  return rows;
+}
+
+function loadMarkers() {
   fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pub?output=csv")
     .then(response => response.text())
     .then(csv => {
 
-      const rows = csv.split("\n").slice(1);
+      const data = parseCSV(csv);
+      data.shift(); // прибираємо заголовки
 
-      rows.forEach(row => {
+      data.forEach(cols => {
 
-        if(!row.trim()) return;
-
-        const cols = row.split(",").map(c => c.trim());
-
-        if(cols.length < 4) return;
+        if (cols.length < 4) return;
 
         const name = cols[0];
         const lat = parseFloat(cols[1]);
@@ -73,12 +85,8 @@ function loadMarkers() {
 
         marker.type = type;
         markers.push(marker);
-
       });
 
-    })
-    .catch(error => {
-      console.error("Помилка завантаження:", error);
     });
 }
 
@@ -88,13 +96,11 @@ document.getElementById("filter").addEventListener("change", function() {
   const value = this.value;
 
   markers.forEach(marker => {
-
     if (value === "all" || marker.type === value) {
       marker.setMap(map);
     } else {
       marker.setMap(null);
     }
-
   });
 
 });
