@@ -1,38 +1,108 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.6.0/tabletop.min.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>VoltSpot Map</title>
+
+<style>
+#map {
+  height: 100vh;
+  width: 100%;
+}
+
+#filter {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  padding: 5px;
+}
+</style>
+</head>
+<body>
+
+<select id="filter">
+  <option value="all">Всі</option>
+  <option value="220">220В</option>
+  <option value="380">380В</option>
+</select>
+
+<div id="map"></div>
+
 <script>
+let map;
+let markers = [];
+
 function initMap() {
-  const map = new google.maps.Map(document.getElementById("map"), {
+  map = new google.maps.Map(document.getElementById("map"), {
     zoom: 11,
     center: { lat: 51.35014, lng: 25.85264 }
   });
 
-  markers = [];
+  loadMarkers();
+}
 
-  Tabletop.init({
-    key: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pub?output=csv",
-    simpleSheet: true,
-    callback: function(data, tabletop) {
-      data.forEach(item => {
-        const lat = parseFloat(item["Google Maps координати (широта, довгота)"].split(",")[0].trim());
-        const lng = parseFloat(item["Google Maps координати (широта, довгота)"].split(",")[1].trim());
-        const name = item["Ім'я"];
-        const type = item["Тип підключення...."];
+function loadMarkers() {
+
+  fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pub?output=csv")
+    .then(response => response.text())
+    .then(csv => {
+
+      const rows = csv.split("\n").slice(1);
+
+      rows.forEach(row => {
+
+        if(!row.trim()) return;
+
+        const cols = row.split(",").map(c => c.trim());
+
+        if(cols.length < 4) return;
+
+        const name = cols[0];
+        const lat = parseFloat(cols[1]);
+        const lng = parseFloat(cols[2]);
+        const type = cols[3];
 
         if(isNaN(lat) || isNaN(lng)) return;
 
         const marker = new google.maps.Marker({
-          position: {lat, lng},
+          position: { lat: lat, lng: lng },
           map: map,
           title: name
         });
 
         marker.type = type;
         markers.push(marker);
+
       });
-    }
-  });
+
+    })
+    .catch(error => {
+      console.error("Помилка завантаження:", error);
+    });
 }
+
+// Фільтр
+document.getElementById("filter").addEventListener("change", function() {
+
+  const value = this.value;
+
+  markers.forEach(marker => {
+
+    if (value === "all" || marker.type === value) {
+      marker.setMap(map);
+    } else {
+      marker.setMap(null);
+    }
+
+  });
+
+});
 </script>
-<script async defer
+
+<script async
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKszoB_C2jBnsTVzaEM4_pJL6vYgDRjWg&callback=initMap">
 </script>
+
+</body>
+</html>
