@@ -34,7 +34,7 @@ function initMap() {
 }
 
 function loadMarkers() {
-  fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pubhtml") // встав своє CSV-посилання тут
+  fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pub?output=csv") // встав своє CSV-посилання тут
     .then(response => response.text())
     .then(csv => {
       const rows = csv.split("\n").slice(1); // пропускаємо заголовки
