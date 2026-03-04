@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <title>VoltSpot Map</title>
 <style>
-#map {
-  height: 100vh;
-  width: 100%;
-}
+  #map {
+    height: 100vh;
+    width: 100%;
+  }
 </style>
 </head>
 <body>
@@ -34,32 +34,41 @@ function initMap() {
 }
 
 function loadMarkers() {
-  fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pubhtml")
+  fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pubhtml") // встав своє CSV-посилання тут
     .then(response => response.text())
     .then(csv => {
-      const rows = csv.split("\n").slice(1);
+      const rows = csv.split("\n").slice(1); // пропускаємо заголовки
 
       rows.forEach(row => {
-        const cols = row.split(";");
-        console.log(cols);
+        if(!row.trim()) return; // пропускаємо порожні рядки
+
+        // Автоматично визначаємо роздільник: кома або крапка з комою
+        let separator = row.includes(";") ? ";" : ",";
+        const cols = row.split(separator).map(c => c.trim()); // видаляємо пробіли
 
         if (cols.length < 4) return;
 
+        const lat = parseFloat(cols[1]);
+        const lng = parseFloat(cols[2]);
+        const name = cols[0];
+        const type = cols[3];
+
+        if(isNaN(lat) || isNaN(lng)) return; // якщо координати некоректні
+
         const marker = new google.maps.Marker({
-          position: {
-            lat: parseFloat(cols[1]),
-            lng: parseFloat(cols[2])
-          },
+          position: { lat, lng },
           map: map,
-          title: cols[0]
+          title: name
         });
 
-        marker.type = cols[3];
+        marker.type = type;
         markers.push(marker);
       });
-    });
+    })
+    .catch(err => console.error("Помилка завантаження CSV:", err));
 }
 
+// Фільтр 220/380
 document.getElementById("filter").addEventListener("change", function() {
   const value = this.value;
 
