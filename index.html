@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>VoltSpot Map</title>
+<style>
+#map {
+  height: 100vh;
+  width: 100%;
+}
+</style>
+</head>
+<body>
+
+<select id="filter">
+  <option value="all">Всі</option>
+  <option value="220">220В</option>
+  <option value="380">380В</option>
+</select>
+
+<div id="map"></div>
+
+<script>
+let map;
+let markers = [];
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 11,
+    center: { lat: 51.35014, lng: 25.85264 }
+  });
+
+  loadMarkers();
+}
+
+function loadMarkers() {
+  fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vS7mxstNyqXWIU79FodXP-KXhPSqIN9eIavtgfTcuUbHxw8KEl7rPKJfbORiXpedlrnpRGC6MqvwH01/pubhtml")
+    .then(response => response.text())
+    .then(csv => {
+      const rows = csv.split("\n").slice(1);
+
+      rows.forEach(row => {
+        const cols = row.split(",");
+
+        if (cols.length < 4) return;
+
+        const marker = new google.maps.Marker({
+          position: {
+            lat: parseFloat(cols[1]),
+            lng: parseFloat(cols[2])
+          },
+          map: map,
+          title: cols[0]
+        });
+
+        marker.type = cols[3];
+        markers.push(marker);
+      });
+    });
+}
+
+document.getElementById("filter").addEventListener("change", function() {
+  const value = this.value;
+
+  markers.forEach(marker => {
+    if (value === "all" || marker.type === value) {
+      marker.setMap(map);
+    } else {
+      marker.setMap(null);
+    }
+  });
+});
+</script>
+
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKszoB_C2jBnsTVzaEM4_pJL6vYgDRjWg&callback=initMap">
+</script>
+
+</body>
+</html>
